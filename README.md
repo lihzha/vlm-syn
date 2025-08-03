@@ -11,7 +11,7 @@ A pipeline for labelling language actions for cross embodiment learning. This re
 
 ```bash
 # Clone the repository
-git clone git@github.com:lihzha/oxe-language-label.git
+git clone git@github.com:lihzha/vlm-syn.git
 cd vlm‑syn
 
 conda env create -f environment.yaml
