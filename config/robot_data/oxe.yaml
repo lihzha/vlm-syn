@@ -1,0 +1,45 @@
+defaults:
+  - _self_
+hydra:
+  run:
+    dir: ${log_dir}
+#_target_: "src.agent.train.TrainVLAAgent"
+
+ # Misc
+log_dir: /n/fs/robot-data/vlm-syn/data/oxe
+name: ${seed}
+device: cuda
+inspect_data: True
+seed: 79
+
+# Logs and Evals
+batch_size: 32
+max_batches: 2000
+
+# Actions
+final_action_clip_value: 1.0  # data normalized in [-1,1]
+cond_steps: 1
+horizon_steps: 1
+action_dim: 7 # EEF_POS
+
+data:
+  val:  # stil aplying image randomization
+    split:  # full val split
+    shuffle_buffer_size: 0 #10000
+    buffer_size: 8192
+  train:
+    dataset_mix: oxe_27
+    split: train
+    data_path: /n/fs/vla-mi/datasets/OXE/
+    # data_path: /n/fs/robot-data/vlm-syn/oxe_data
+    window_size: ${cond_steps}
+    action_horizon: ${horizon_steps}
+    skip_unlabeled: True
+    load_proprio: True
+    shuffle_buffer_size: 0 #200000
+    num_parallel_calls: 100
+    traj_transform_threads: 10
+    traj_read_threads: 10
+    image_aug: False
+
+

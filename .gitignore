@@ -1,0 +1,7 @@
+__pycache__/
+/data/
+slurm/
+scripts/
+*.mp4
+posed_droid/
+droid/
