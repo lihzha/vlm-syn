@@ -5,3 +5,11 @@ scripts/
 *.mp4
 posed_droid/
 droid/
+google-cloud-sdk/
+droid-lang-actions/
+droid_lang_actions_json/
+metadata/
+visualizations/
+log/
+droid_utils/
+.vscode/

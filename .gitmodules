@@ -1,3 +1,7 @@
-[submodule "pipeline/gripper_label_and_track/utils/point_trackers/tapnet"]
-	path = pipeline/gripper_label_and_track/utils/point_trackers/tapnet
-	url = https://github.com/lihzha/tapnet.git
+[submodule "pipeline/utils/tapnet"]
+    path = pipeline/utils/tapnet
+    url = https://github.com/lihzha/tapnet.git
+
+[submodule "pipeline/utils/molmo"]
+	path = pipeline/utils/molmo
+	url = https://github.com/allenai/molmo.git
