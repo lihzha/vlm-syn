@@ -1,7 +1,0 @@
-[submodule "pipeline/utils/tapnet"]
-    path = pipeline/utils/tapnet
-    url = https://github.com/lihzha/tapnet.git
-
-[submodule "pipeline/utils/molmo"]
-	path = pipeline/utils/molmo
-	url = https://github.com/allenai/molmo.git
