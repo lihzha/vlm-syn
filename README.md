@@ -21,32 +21,7 @@ conda activate ceg
 
 ---
 
-## 2. Data Loading and Processing
-
-The script provides an example about how to load the OXE dataset. You can design your data processing script based on this.
-
-```bash
-python pipeline/load_oxe_dataset.py \
-       --input  data/raw/oxe_dataset \
-       --output data/processed
-```
-
----
-
-## 3. Gemini Playground
-
-Interact with processed images or run quick prompts through Gemini.
-Requires a **Google API key** set as an environment variable (ask Lihan if you need one):
-
-```bash
-export GEMINI_VLA_API_KEY="<your‑key>"
-# Modify the main function to load corresponding images and prompts
-python pipeline/gemini_playground.py
-```
-
----
-
-## 4. Gripper Label and Tracking (only for Michael for now)
+## 2. Gripper Label and Tracking (only for Michael for now)
 
 To try gripper labelling and tracking, you should look at `pipeline/gripper_label_and_track`. You will first need to implement `pipeline/gripper_label_and_track/utils/get_gripper_pos.py` using Molmo:
 1. Molmo online playground: https://playground.allenai.org/
@@ -66,17 +41,29 @@ export PYTHONPATH=`(cd ../ && pwd)`:`pwd`:$PYTHONPATH
 ```
 
 To initialize the Molmo repo:
-
-
-After this, you should be able to run `pipeline/gripper_label_and_track/fit_robo2cam.py`, which gives you the robot end effector trajectories in the camera frame.
 ```bash
 cd pipeline/utils/molmo
 pip install -e .[all]
 ```
 
+After this, you can run `pipeline/load_and_label.py` to label gripper points. You need to change `config/oxe.yaml` to set your log directory, etc.
+
 ---
 
-## 5. Labelling human video (only for Jeremy for now)
+## 3. Gemini Playground
+
+Interact with processed images or run quick prompts through Gemini.
+Requires a **Google API key** set as an environment variable (ask Lihan if you need one):
+
+```bash
+export GEMINI_VLA_API_KEY="<your‑key>"
+# Modify the main function to load corresponding images and prompts
+python pipeline/gemini_playground.py
+```
+
+---
+
+## 4. Labelling human video (only for Jeremy for now)
 
 I don't have any related scripts yet. In my mind, the overall pipeline should be:
 1. Prepare a dataset: e.g. HOI4D and HOT3D
