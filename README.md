@@ -56,7 +56,7 @@ Then, to initialize the tracking repo, run:
 ```bash
 git submodule update --init --recursive
 
-cd pipeline/gripper_label_and_track/utils/point_trackers/tapnet
+cd pipeline/utils/tapnet
 pip install .
 
 mkdir checkpoints
@@ -65,7 +65,14 @@ wget -P checkpoints https://storage.googleapis.com/dm-tapnet/bootstap/bootstapir
 export PYTHONPATH=`(cd ../ && pwd)`:`pwd`:$PYTHONPATH
 ```
 
+To initialize the Molmo repo:
+
+
 After this, you should be able to run `pipeline/gripper_label_and_track/fit_robo2cam.py`, which gives you the robot end effector trajectories in the camera frame.
+```bash
+cd pipeline/utils/molmo
+pip install -e .[all]
+```
 
 ---
 
