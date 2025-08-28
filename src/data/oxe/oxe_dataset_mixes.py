@@ -178,7 +178,7 @@ OXE_FULL_MIX = [
 OXE_OPENVLA_MIX = [
     # ("fractal20220817_data", 1.0),
     # ("bridge", 1.0),
-    # ("kuka", 1.0),
+    ("kuka", 1.0),
     # ("taco_play", 1.0),
     # ("jaco_play", 1.0),
     # ("berkeley_cable_routing", 1.0),
@@ -202,7 +202,7 @@ OXE_OPENVLA_MIX = [
     # ("cmu_stretch", 1.0),
     # ("dobbe", 1.0),
     # # ("fmb", 1.0),
-    ("droid", 1.0),
+    # ("droid", 1.0),
 ]
 
 

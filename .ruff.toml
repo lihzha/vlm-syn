@@ -1,0 +1,18 @@
+line-length = 100
+extend-exclude = [
+    "data",
+    "droid",
+    "droid-lang-actions",
+    "droid_lang_actions_json",
+    "google-cloud-sdk",
+    "log",
+    "visualizations",
+    "pipeline/gripper_label_and_track/utils/point_trackers/tapnet",
+    "__pycache__",
+    ".ipynb_checkpoints",
+]
+
+[lint]
+select = ["E", "F", "I"]
+
+

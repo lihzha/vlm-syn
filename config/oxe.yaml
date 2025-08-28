@@ -6,7 +6,7 @@ hydra:
 #_target_: "src.agent.train.TrainVLAAgent"
 
  # Misc
-log_dir: /n/fs/vlm-syn/vlm-syn/data/bridge_data/${name}/
+log_dir: /n/fs/robot-data/data/oxe_gripper_label
 name: ${seed}
 device: cuda
 inspect_data: True
@@ -28,16 +28,18 @@ data:
     shuffle_buffer_size: 0 #10000
     buffer_size: 8192
   train:
-    dataset_mix: bridge
+    dataset_mix: oxe_27
     split: train
-    data_path: ${oc.env:VLA_DATA_DIR}/resize_224
-    window_size: ${cond_steps}
+    data_path: /n/fs/vla-mi/datasets/OXE/
+    # data_path: /n/fs/robot-data/vlm-syn/oxe_data
+    window_size: 1
     action_horizon: ${horizon_steps}
-    skip_unlabeled: True
+    skip_unlabeled: False
     load_proprio: True
     shuffle_buffer_size: 0 #200000
-    num_parallel_calls: 100
-    traj_transform_threads: 10
-    traj_read_threads: 10
+    num_parallel_calls: 60
+    traj_transform_threads: 30
+    traj_read_threads: 30
+    image_aug: False
 
 

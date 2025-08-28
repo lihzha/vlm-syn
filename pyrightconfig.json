@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/pyright/schemas/pyrightconfig.schema.json",
+  "venvPath": "/n/fs/robot-data/miniconda3/envs",
+  "venv": "ceg",
+  "include": [
+    "src",
+    "pipeline",
+    "droid_utils"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.ipynb_checkpoints",
+    "data",
+    "droid",
+    "droid-lang-actions",
+    "droid_lang_actions_json",
+    "google-cloud-sdk",
+    "log",
+    "visualizations",
+    "pipeline/gripper_label_and_track/utils/point_trackers/tapnet"
+  ],
+  "pythonVersion": "3.12",
+  "reportMissingImports": "warning",
+  "typeCheckingMode": "standard"
+}
+
+

@@ -76,10 +76,11 @@ def chunk_act_obs(
     )  # [traj_len, window_size, action_horizon, action_dim]
 
     # finally, we deal with marking which actions are past the goal timestep (or final timestep if no goal)
-    if "timestep" in traj["task"]:
-        goal_timestep = traj["task"]["timestep"]
-    else:
-        goal_timestep = tf.fill([traj_len], traj_len - 1)
+    # if "timestep" in traj["task"]:
+    #     goal_timestep = traj["task"]["timestep"]
+    # else:
+    #     goal_timestep = tf.fill([traj_len], traj_len - 1)
+    goal_timestep = tf.fill([traj_len], traj_len - 1)
     # computes the number of timesteps away the goal is relative to a particular action
     t, w, h = tf.meshgrid(
         tf.range(traj_len),
@@ -222,7 +223,8 @@ def add_pad_mask_dict(traj: dict) -> dict:
     traj["observation"|"task"]["pad_mask_dict"] = {k: traj["observation"|"task"][k] is not padding}
     """
     traj_len = tf.shape(traj["action"])[0]
-    for key in ["observation", "task"]:
+    # for key in ["observation", "task"]:
+    for key in ["observation"]:
         pad_mask_dict = {}
         for subkey in traj[key]:
             if traj[key][subkey].dtype == tf.string:

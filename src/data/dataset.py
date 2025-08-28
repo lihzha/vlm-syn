@@ -230,7 +230,7 @@ def apply_frame_transforms(
     # it to the chunked "observation" dict as well as the non-chunked "task" dict
     def apply_obs_transform(fn: Callable[[dict], dict], frame: dict) -> dict:
         # task is not chunked -- apply fn directly
-        frame["task"] = fn(frame["task"])
+        # frame["task"] = fn(frame["task"])
         # observation is chunked -- apply fn along first axis
         frame["observation"] = dl.vmap(fn)(frame["observation"])
         return frame
@@ -386,28 +386,56 @@ def make_dataset_from_rlds(
                 "Did you write a `standardize_fn`?"
             )
 
-        # extracts images, depth images and proprio from the "observation" dict
+        # extracts images, depth images and pads to a fixed temporal length for batching
 
         traj_len = tf.shape(traj["action"])[0]
         old_obs = traj["observation"]
+
+        # Determine target padded length (env TRJ_PAD_TO or default 256)
+        pad_to_py = os.environ.get("TRJ_PAD_TO", "50")
+        try:
+            pad_to_len = int(pad_to_py)
+        except Exception:
+            pad_to_len = 256
+        pad_to_len_t = tf.constant(pad_to_len, dtype=tf.int32)
+
+        def pad_str_1d(t: tf.Tensor) -> tf.Tensor:
+            # Ensure rank-1 string tensor, crop then pad with empty strings to length pad_to_len
+            t = tf.convert_to_tensor(t)
+            t = t[:pad_to_len_t]
+            cur_len = tf.shape(t)[0]
+            pad_amt = tf.maximum(0, pad_to_len_t - cur_len)
+            paddings = tf.stack([[0, pad_amt]])
+            return tf.pad(t, paddings)
+
+        def pad_numeric_2d(t: tf.Tensor) -> tf.Tensor:
+            # Ensure rank-2 numeric tensor [T, D], crop then pad with zeros on time dim
+            t = tf.convert_to_tensor(t)
+            t = t[:pad_to_len_t]
+            t_shape = tf.shape(t)
+            cur_len = t_shape[0]
+            pad_amt = tf.maximum(0, pad_to_len_t - cur_len)
+            paddings = tf.stack([[0, pad_amt], [0, 0]])
+            return tf.pad(t, paddings)
+
         new_obs = {}
         for new, old in image_obs_keys.items():
             if old is None:
-                new_obs[f"image_{new}"] = tf.repeat("", traj_len)  # padding
+                new_obs[f"image_{new}"] = pad_str_1d(tf.repeat("", tf.minimum(traj_len, pad_to_len_t)))
             else:
-                new_obs[f"image_{new}"] = old_obs[old]
+                new_obs[f"image_{new}"] = pad_str_1d(old_obs[old])
 
         for new, old in depth_obs_keys.items():
             if old is None:
-                new_obs[f"depth_{new}"] = tf.repeat("", traj_len)  # padding
+                new_obs[f"depth_{new}"] = pad_str_1d(tf.repeat("", tf.minimum(traj_len, pad_to_len_t)))
             else:
-                new_obs[f"depth_{new}"] = old_obs[old]
+                new_obs[f"depth_{new}"] = pad_str_1d(old_obs[old])
+                
+        # if proprio_obs_key is not None:
+        #     new_obs["proprio"] = tf.cast(old_obs[proprio_obs_key], tf.float32)
 
-        if proprio_obs_key is not None:
-            new_obs["proprio"] = tf.cast(old_obs[proprio_obs_key], tf.float32)
-
-        # add timestep info
-        new_obs["timestep"] = tf.range(traj_len)
+        # # add timestep info
+        # new_obs["timestep"] = tf.range(traj_len)
 
         # extracts `language_key` into the "task" dict, or samples uniformly if `language_key` fnmatches multiple keys
         task = {}
@@ -421,13 +449,12 @@ def make_dataset_from_rlds(
         # file_path_tensor = traj["traj_metadata"]["episode_metadata"]["file_path"]
         # Calculate the same unique ID as before
 
-        # symbolic tensor, need to decode
         traj = {
             "observation": new_obs,
-            "task": task,
-            "action": tf.cast(traj["action"], tf.float32),
-            "dataset_name": tf.repeat(name, traj_len),
-            # "file_path_tensor": file_path_tensor,
+            # "task": task,
+            "action": pad_numeric_2d(tf.cast(traj["action"], tf.float32)),
+            "dataset_name": tf.repeat(name, pad_to_len_t),
+            "traj_index": tf.repeat(traj["_traj_index"][0], pad_to_len_t),
         }
 
         return traj
@@ -435,10 +462,6 @@ def make_dataset_from_rlds(
     def is_nonzero_length(traj):
         return tf.shape(traj["action"])[0] > 0
 
-    # builder = tfds.builder(
-    #     name,
-    #     data_dir=data_dir,
-    # )
 
     dataset_dir = os.path.join(data_dir, name)
     subdirs = [
@@ -451,8 +474,6 @@ def make_dataset_from_rlds(
     )
     builder = tfds.builder_from_directory(os.path.join(dataset_dir, subdirs[0]))
 
-    # print("Hardcoding builder datadir in dataset.py make_dataset_from_rlds")
-    # builder.data_dir = data_dir
 
     # load or compute dataset statistics
     if isinstance(dataset_statistics, str):
@@ -460,22 +481,14 @@ def make_dataset_from_rlds(
             dataset_statistics = json.load(f)
     elif dataset_statistics is None:
         full_dataset = dl.DLataset.from_rlds(builder, split="all", shuffle=False)
-        # print("After full_dataset in /n/fs/vlm-syn/vlm-syn/src/data/dataset.py")
-        # Test for environment name
-        # iterator = iter(full_dataset)
-        # example = next(iterator)
-        # file_path_tensor = example['traj_metadata']['episode_metadata']['file_path']
-        # file_path = file_path_tensor[0].numpy().decode('utf-8')
-        # breakpoint()
+
         for filter_fcn_spec in filter_functions:
+            raise NotImplementedError("filter_functions not implemented in dataset.py")
             full_dataset = full_dataset.filter(ModuleSpec.instantiate(filter_fcn_spec))
-        if ignore_errors:
-            full_dataset = full_dataset.ignore_errors()
+        # if ignore_errors:
+        #     full_dataset = full_dataset.ignore_errors()
         full_dataset = full_dataset.traj_map(restructure).filter(is_nonzero_length)
 
-        # breakpoint()
-        # print("After full_dataset traj_map in /n/fs/vlm-syn/vlm-syn/src/data/dataset.py")
-        # tries to load from cache, otherwise computes on the fly
         dataset_statistics = get_dataset_statistics(
             full_dataset,
             hash_dependencies=(
@@ -517,29 +530,11 @@ def make_dataset_from_rlds(
         builder, split=split, shuffle=shuffle, num_parallel_reads=num_parallel_reads
     )
 
-    # iterator = iter(dataset)
-    # print(
-    #     "Getting filepaths to determine environment name. Located in /n/fs/vlm-syn/vlm-syn/src/data/dataset.py"
-    # )
-    # file_paths = {}
-    # trajectory_ids = {}
-    # manually iterate through the dataset to get dictionary of filepaths
-    # for i, example in enumerate(iterator):
-    #     file_path_tensor = example["traj_metadata"]["episode_metadata"]["file_path"]
-    #     file_path = file_path_tensor[0].numpy().decode("utf-8")
-    #     file_paths[i] = file_path
-
-    # if i > 10:
-    #   break
-
-    # ile_path_tensor = example['traj_metadata']['episode_metadata']['file_path']
-    # file_path = file_path_tensor[0].numpy().decode('utf-8')
-
     dataset_len = len(dataset)
-    for filter_fcn_spec in filter_functions:
-        dataset = dataset.filter(ModuleSpec.instantiate(filter_fcn_spec))
-    if ignore_errors:
-        dataset = dataset.ignore_errors()
+    # for filter_fcn_spec in filter_functions:
+    #     dataset = dataset.filter(ModuleSpec.instantiate(filter_fcn_spec))
+    # if ignore_errors:
+    #     dataset = dataset.ignore_errors()
 
     # Manually iterate through the dataset to get dictionary of filepaths
 
@@ -548,13 +543,6 @@ def make_dataset_from_rlds(
     dataset = dataset.traj_map(restructure, num_parallel_calls).filter(
         is_nonzero_length
     )
-
-    # print("After dataset traj_map in /n/fs/vlm-syn/vlm-syn/src/data/dataset.py")
-    # breakpoint()
-    # iterator = iter(dataset)
-    # example = next(iterator)
-    # file_path_tensor = example['traj_metadata']['episode_metadata']['file_path']
-    # file_path = file_path_tensor[0].numpy().decode('utf-8')
 
     # normalization
     if not skip_norm:
@@ -575,22 +563,6 @@ def make_dataset_from_rlds(
             "Dataset normalization turned off -- set skip_norm=False to apply normalization."
         )
 
-    """ breakpoint()
-    print("Adding file paths to dataset in /n/fs/vlm-syn/vlm-syn/src/data/dataset.py")
-    # add filepaths to dataset
-    dataset = dataset.traj_map(
-        lambda x: {
-            "observation": x["observation"],
-            "task": x["task"],
-            "action": x["action"],
-            "dataset_name": x["dataset_name"],
-            "file_path": file_paths,
-        }
-    )
-
-    breakpoint()
- """
-
     return dataset, dataset_statistics, dataset_len
 
 
@@ -599,15 +571,14 @@ def make_interleaved_dataset(
     sample_weights: Optional[Sequence[float]] = None,
     *,
     train: bool,
-    shuffle_buffer_size: int,
     traj_transform_kwargs: dict = {},
     frame_transform_kwargs: dict = {},
     split: Optional[str] = None,
-    batch_size: Optional[int] = None,
     balance_weights: bool = True,
     traj_transform_threads: Optional[int] = None,
     traj_read_threads: Optional[int] = None,
     apply_trajwise_image_aug: bool = False,
+    batch_size: int = 64,
 ) -> dl.DLataset:
     # Default to uniform sampling - UNCHANGED
     if not sample_weights:
@@ -753,26 +724,23 @@ def make_interleaved_dataset(
         dataset = apply_frame_transforms(
             dataset, **frame_transform_kwargs, train=train, do_imgaug=True
         )
+        
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.prefetch(2)
+    dataset = dataset.with_ram_budget(1)
 
-    # Sequential batch
-    if batch_size is not None:
-        dataset = dataset.batch(batch_size)
+    # # Sequential batch
+    # if batch_size is not None:
+    #     dataset = dataset.batch(batch_size)
 
     # Reduce memory usage
-    dataset = dataset.with_ram_budget(gb=1)
-
-    dataset = dataset.ignore_errors(log_warning=True)
-
+    # dataset = dataset.with_ram_budget(1)
+    # dataset = dataset.ignore_errors(log_warning=True)
     # Save metadata
-    dataset.dataset_statistics = all_dataset_statistics
-    dataset.sample_weights = sample_weights
-    dataset.true_lengths = dataset_true_lengths
-    dataset.true_total_length = sum(dataset_true_lengths)
+    # dataset.dataset_statistics = all_dataset_statistics
+    # dataset.sample_weights = sample_weights
+    # dataset.true_lengths = dataset_true_lengths
+    # dataset.true_total_length = sum(dataset_true_lengths)
 
-    # # -- eager-style iteration -------------------------------------------------
-    # for traj in dataset.iterator(prefetch=0):  # or: for traj in dataset:
-    #     print("available keys:", traj.keys())  # e.g. obs, act, reward …
-    #     # traj["observation"] has shape (T, …), traj["action"] has shape (T, …)
-    #     breakpoint()
 
     return dataset
