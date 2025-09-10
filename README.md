@@ -21,7 +21,7 @@ conda activate ceg
 
 ---
 
-## 2. Gripper Label and Tracking (only for Michael for now)
+## 2. Gripper Label and Tracking
 
 To try gripper labelling and tracking, you should look at `pipeline/gripper_label_and_track`. You will first need to implement `pipeline/gripper_label_and_track/utils/get_gripper_pos.py` using Molmo:
 1. Molmo online playground: https://playground.allenai.org/
@@ -63,7 +63,7 @@ python pipeline/gemini_playground.py
 
 ---
 
-## 4. Labelling human video (only for Jeremy for now)
+## 4. Labelling human video
 
 I don't have any related scripts yet. In my mind, the overall pipeline should be:
 1. Prepare a dataset: e.g. HOI4D and HOT3D
