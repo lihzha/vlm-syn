@@ -23,7 +23,8 @@ conda activate ceg
 
 ## 2.0 Gripper Label Example of DROID
 
-Run python droid_utils/process_dataset.py
+1. Get json files from https://huggingface.co/KarlP/droid/tree/main
+2. Run python droid_utils/process_dataset.py
 
 ---
 
