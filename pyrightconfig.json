@@ -13,7 +13,7 @@
     "data",
     "droid",
     "droid-lang-actions",
-    "droid_lang_actions_json",
+    // "droid_lang_actions_json",
     "google-cloud-sdk",
     "log",
     "visualizations",
