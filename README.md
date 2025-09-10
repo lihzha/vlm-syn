@@ -21,6 +21,12 @@ conda activate ceg
 
 ---
 
+## 2.0 Gripper Label Example of DROID
+
+Run python droid_utils/process_dataset.py
+
+---
+
 ## 2. Gripper Label and Tracking
 
 To try gripper labelling and tracking, you should look at `pipeline/gripper_label_and_track`. You will first need to implement `pipeline/gripper_label_and_track/utils/get_gripper_pos.py` using Molmo:
